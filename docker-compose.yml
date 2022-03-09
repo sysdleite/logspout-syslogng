@@ -1,0 +1,25 @@
+---
+version: '3.8'
+
+services:
+
+  logspout:
+    image: gliderlabs/logspout:latest
+    restart: always
+    environment:
+      - PORT=8888
+      - BACKLOG=false
+      - SYSLOG_FORMAT=rfc3164
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    command: syslog+udp://syslogng:5114?filter.name=dev_*,syslog+udp://syslogng:5115?filter.name=preprod_*,syslog+udp://syslogng:5116?filter.name=prod_*
+
+  syslogng:
+    image: balabit/syslog-ng:latest
+    restart: always
+    command: "--no-caps"
+    userns_mode: 'host'
+    volumes:
+      - "./logs/:/var/log/syslogng/:rw"
+      - "./syslog-ng.conf:/etc/syslog-ng/syslog-ng.conf:ro"
+      - "./rm_14_days.sh:/etc/cron.daily/rm_14_days.sh:ro
